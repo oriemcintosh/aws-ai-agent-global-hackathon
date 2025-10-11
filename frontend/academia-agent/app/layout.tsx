@@ -24,9 +24,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="theme-purple">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <head>
+        {/* Prefer SVG favicon for modern browsers, provide explicit types and shortcut for compatibility */}
+  <link rel="icon" href="/favicon-book.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-book-16.png" sizes="16x16" />
+  <link rel="icon" href="/favicon-book-32.png" sizes="32x32" />
+  <link rel="icon" href="/favicon-book-48.png" sizes="48x48" />
+  <link rel="apple-touch-icon" href="/favicon-book-180.png" sizes="180x180" />
+  <link rel="shortcut icon" href="/favicon-book-32.png" />
+        <meta name="theme-color" content="#0b1020" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
