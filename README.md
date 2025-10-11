@@ -73,9 +73,9 @@ python agentcore_agents/invoke_agent.py
 - `AGENT_ARN` must be set for `invoke_agent.py`.
 - `boto3` uses your configured AWS credentials. Make sure you have a valid AWS profile or environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION) configured.
 
-Security note
+> [!Security Note]
 
-- Do not commit credentials or `.env` files to the repository. Use secrets managers or CI environment variables for deployment.
+>Do not commit credentials or `.env` files to the repository. Use secrets managers or CI environment variables for deployment.
 
 ## Developer notes & tips
 
