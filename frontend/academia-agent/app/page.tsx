@@ -9,6 +9,16 @@ type Message = {
 };
 
 function uid() {
+  try {
+    // Use the secure randomUUID when available (browser or Node)
+    const rng = (globalThis as any)?.crypto?.randomUUID ?? (globalThis as any)?.crypto?.getRandomValues ? undefined : undefined;
+    if ((globalThis as any)?.crypto?.randomUUID) {
+      return (globalThis as any).crypto.randomUUID();
+    }
+  } catch (e) {
+    // ignore and fall back
+  }
+  // Fallback for environments without crypto.randomUUID
   return Math.random().toString(36).slice(2, 9);
 }
 
