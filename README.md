@@ -68,7 +68,7 @@ python agentcore_agents/invoke_agent.py
 
 - `agentcore_agents/test_agent/test_agent.py` — a minimal local agent example using `bedrock_agentcore` and a `strands.Agent` wrapper. It defines an `invoke` entrypoint and runs a small local app when executed. Use it as a lightweight local test harness.
 
-Required environment & AWS credentials
+## Required environment & AWS credentials
 
 - `AGENT_ARN` must be set for `invoke_agent.py`.
 - `boto3` uses your configured AWS credentials. Make sure you have a valid AWS profile or environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION) configured.
