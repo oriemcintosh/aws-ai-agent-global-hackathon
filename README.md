@@ -75,7 +75,7 @@ python agentcore_agents/invoke_agent.py
 
 > [!Security Note]
 
->Do not commit credentials or `.env` files to the repository. Use secrets managers or CI environment variables for deployment.
+> Do not commit credentials or `.env` files to the repository. Use secrets managers or CI environment variables for deployment.
 
 ## Developer notes & tips
 
