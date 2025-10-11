@@ -11,7 +11,6 @@ type Message = {
 function uid() {
   try {
     // Use the secure randomUUID when available (browser or Node)
-    const rng = (globalThis as any)?.crypto?.randomUUID ?? (globalThis as any)?.crypto?.getRandomValues ? undefined : undefined;
     if ((globalThis as any)?.crypto?.randomUUID) {
       return (globalThis as any).crypto.randomUUID();
     }
