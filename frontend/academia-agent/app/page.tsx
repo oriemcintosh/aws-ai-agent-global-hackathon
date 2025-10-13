@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { AuthCard } from "@/components/auth-card";
+import { Button } from "@/components/ui/button";
+import { signOut } from "next-auth/react";
 
 type Message = {
   id: string;
@@ -37,6 +41,7 @@ function getGreeting() {
 }
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: uid(),
@@ -81,6 +86,28 @@ export default function Home() {
     }, 700);
   }
 
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth card if not authenticated
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <AuthCard />
+      </div>
+    );
+  }
+
+  // Show the main app if authenticated
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background text-foreground">
       <div className="w-full max-w-3xl h-[80vh] sm:h-[80vh] flex flex-col bg-card text-card-foreground rounded-2xl shadow-md overflow-hidden">
@@ -93,7 +120,17 @@ export default function Home() {
               <p className="text-xs text-muted">AI Agent to Help you Chart Your Academic Journey</p>
             </div>
           </div>
-          <div className="text-xs text-muted">Model: AWS Nova Micro</div>
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-muted hidden sm:block">Model: AWS Nova Micro</div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => signOut()}
+              className="text-xs"
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
