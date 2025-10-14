@@ -121,11 +121,11 @@ export function AuthCard() {
           </Button>
 
           <p className="text-xs text-center text-muted-foreground leading-relaxed">
-            We&apos;ll create an account if one doesn&apos;t already exist.
+            We'll create an account if one doesn't already exist.
           </p>
 
           <p className="text-xs text-center text-muted-foreground leading-relaxed">
-            You&apos;ll be redirected to a secure sign-in page
+            You'll be redirected to a secure sign-in page
           </p>
         </div>
       </CardContent>
