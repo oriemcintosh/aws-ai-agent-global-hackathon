@@ -3,9 +3,14 @@ import { encode } from 'he';
 
 // Number of minutes before the verification code expires.
 // Ensure this value matches the actual expiration time configured in your authentication system.
-export const CODE_EXPIRATION_MINUTES = process.env.CODE_EXPIRATION_MINUTES
+const parsedExpiration = process.env.CODE_EXPIRATION_MINUTES
   ? parseInt(process.env.CODE_EXPIRATION_MINUTES, 10)
   : 10;
+
+export const CODE_EXPIRATION_MINUTES =
+  Number.isInteger(parsedExpiration) && parsedExpiration >= 1 && parsedExpiration <= 60
+    ? parsedExpiration
+    : 10;
 
 export const auth = defineAuth({
   loginWith: {
