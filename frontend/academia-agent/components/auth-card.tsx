@@ -117,8 +117,12 @@ export function AuthCard() {
             className="w-full" 
             disabled={loading || !email.trim() || !agreedToTerms}
           >
-            {loading ? "Redirecting..." : "Sign In"}
+            {loading ? "Redirecting..." : "Continue"}
           </Button>
+
+          <p className="text-xs text-center text-muted-foreground leading-relaxed">
+            We&apos;ll create an account if one doesn&apos;t already exist.
+          </p>
 
           <p className="text-xs text-center text-muted-foreground leading-relaxed">
             You&apos;ll be redirected to a secure sign-in page
