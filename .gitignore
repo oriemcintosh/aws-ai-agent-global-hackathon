@@ -47,6 +47,11 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Ensure frontend/lib/ is tracked even if generic `lib/` patterns exist above
+!frontend/lib/
+# Also un-ignore any `lib` directory inside frontend (e.g. frontend/xyz/lib/)
+!frontend/**/lib/
+!frontend/**/lib/**
 lib64/
 parts/
 sdist/
