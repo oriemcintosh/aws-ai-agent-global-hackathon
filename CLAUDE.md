@@ -121,6 +121,3 @@ How to keep CLAUDE.md effective
 
 Examples to copy/paste (short)
 - "Create a SignIn page that calls signIn('google') and uses useRouter for redirects. Put it in src/app/(auth)/sign-in/page.tsx and include tests."
-
-Final note
-- Yes — include CLAUDE.md. It significantly improves prompt consistency, reduces back-and-forth, and helps Claude produce secure, repo-aligned code for your Claude.ai + Next.js front-end.
