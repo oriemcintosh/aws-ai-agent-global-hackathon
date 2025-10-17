@@ -78,7 +78,7 @@ export default function TermsPage() {
           <address className="not-italic mt-1">
             Eight Twelve Consulting LLC
             <br />
-            Email: <a href="mailto:privacy@eighttwelveconsulting.com" className="text-[color-mix(in_srgb,var(--foreground)_85%,transparent)] hover:text-[var(--primary)] hover:underline">privacy@eighttwelveconsulting.com</a>
+            Email: <a href="mailto:privacy@eighttwelveconsulting.com" className="text-[color-mix(in_srgb,var(--foreground)_85%,transparent)] hover:text-[var(--primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ring)]">privacy@eighttwelveconsulting.com</a>
           </address>
         </section>
       </div>
