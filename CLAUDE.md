@@ -17,6 +17,20 @@ High-level constraints (important)
 - Include tests (Jest + React Testing Library) when adding substantial UI code.
 - Keep bundle size and third-party dependencies minimal; prefer built-in Next.js features and light WebAuthn libs.
 
+Mobile-first & responsive design requirements
+- All pages and components MUST be mobile-friendly and fully responsive across device sizes.
+- Use a mobile-first approach: design for small screens first, then enhance for larger viewports.
+- Leverage Tailwind CSS responsive breakpoints (sm:, md:, lg:, xl:, 2xl:) consistently throughout the codebase.
+- Touch targets should be minimum 44×44px for accessibility on mobile devices.
+- Test layouts at common breakpoints: 320px (mobile), 768px (tablet), 1024px (desktop), 1440px (large desktop).
+- Use responsive typography: relative units (rem, em) over fixed pixel sizes where appropriate.
+- Images and media should be responsive using Next.js Image component with appropriate sizes and responsive props.
+- Navigation should adapt gracefully: consider hamburger menus or collapsible navigation for mobile.
+- Form inputs and buttons should be appropriately sized for touch interfaces (minimum 16px font size to prevent zoom on iOS).
+- Horizontal scrolling should be avoided; use flexbox/grid with wrap or stack layouts for mobile.
+- Test on actual mobile devices or browser DevTools in responsive mode before considering work complete.
+- Consider viewport meta tag is properly set: <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 pnpm + shadcn specifics
 - Use pnpm for all installs and scripts:
   - Install: pnpm install
