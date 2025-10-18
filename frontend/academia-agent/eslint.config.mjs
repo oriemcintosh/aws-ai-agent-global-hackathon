@@ -18,6 +18,11 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // ignore macOS resource fork files that appear as dot-prefixed files like `._file`
+      "**/._*",
+      // ignore local env files
+      ".env",
+      ".env.*",
     ],
   },
 ];

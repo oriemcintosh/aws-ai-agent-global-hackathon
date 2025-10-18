@@ -1,7 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "dev-secret",
   providers: [
     CredentialsProvider({
@@ -10,7 +10,7 @@ export const authOptions = {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials?: { username?: string; password?: string } | undefined) {
         // Minimal dev-only auth: accept any username/password and return a user object
         if (!credentials) return null;
         const user = { id: credentials.username, name: credentials.username };
@@ -20,5 +20,5 @@ export const authOptions = {
   ],
 };
 
-const handler = NextAuth(authOptions as any);
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

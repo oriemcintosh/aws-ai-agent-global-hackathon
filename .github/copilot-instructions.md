@@ -15,6 +15,7 @@ The agent entry point pattern: use `@app.entrypoint` decorator on an `invoke(pay
 - **strands-agents>=1.9.1**: Agent orchestration framework
 - **boto3**: AWS SDK for invoking deployed agents
 - **ruff**: Python linting and formatting
+- **pnpm**: JavaScript package manager (for planned frontend)
 
 ## Essential Commands
 

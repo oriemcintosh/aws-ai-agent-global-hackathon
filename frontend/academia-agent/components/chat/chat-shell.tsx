@@ -149,12 +149,14 @@ export function ChatShell() {
     if (!ok) return;
 
     setConversations((prev) => {
-      const { [conversationId]: _removed, ...rest } = prev;
+      const rest = { ...prev };
+      delete rest[conversationId];
       return rest;
     });
 
     setMessagesByConversation((prev) => {
-      const { [conversationId]: _removed, ...rest } = prev;
+      const rest = { ...prev };
+      delete rest[conversationId];
       return rest;
     });
 
@@ -167,6 +169,8 @@ export function ChatShell() {
       if (remainingOrder.length > 0) return remainingOrder[0];
       return initialConversationId;
     });
+    // close the mobile sidebar after deleting a conversation so the UI is consistent
+    setMobileSidebarOpen(false);
   };
 
   const updateConversationMeta = (conversationId: string, fallbackTitle: string) => {
@@ -535,7 +539,6 @@ export function ChatShell() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteConversation(conversationId);
-                                setMobileSidebarOpen(false);
                               }}
                               className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]"
                             >
