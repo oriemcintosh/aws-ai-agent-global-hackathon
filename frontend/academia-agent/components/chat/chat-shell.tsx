@@ -288,22 +288,33 @@ export function ChatShell() {
               const isActive = conversationId === activeConversationId;
               return (
                 <li key={conversationId}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectConversation(conversationId)}
+                  <div
                     className={cn(
-                      "w-full rounded-md px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-ring)]",
+                      "w-full rounded-md px-3 py-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-ring)]",
                       isActive
                         ? "bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)]"
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
                     )}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium truncate">{conversation.title}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
-                          {getRelativeTime(conversation.updatedAt)}
-                        </span>
+                    <div className="flex items-start justify-between">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectConversation(conversationId)}
+                        className="flex-1 text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium truncate">{conversation.title}</span>
+                          <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
+                            {getRelativeTime(conversation.updatedAt)}
+                          </span>
+                        </div>
+                        {lastMessage ? (
+                          <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
+                            {lastMessage.content}
+                          </p>
+                        ) : null}
+                      </button>
+                      <div className="ml-2 flex-shrink-0">
                         <button
                           type="button"
                           aria-label={`Delete conversation ${conversation.title}`}
@@ -317,12 +328,7 @@ export function ChatShell() {
                         </button>
                       </div>
                     </div>
-                    {lastMessage ? (
-                      <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
-                        {lastMessage.content}
-                      </p>
-                    ) : null}
-                  </button>
+                  </div>
                 </li>
               );
             })}
@@ -494,22 +500,36 @@ export function ChatShell() {
                   const isActive = conversationId === activeConversationId;
                   return (
                     <li key={conversationId}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectConversation(conversationId)}
+                      <div
                         className={cn(
-                          "w-full rounded-md px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-ring)]",
+                          "w-full rounded-md px-3 py-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-ring)]",
                           isActive
                             ? "bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)]"
                             : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
                         )}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium truncate">{conversation.title}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
-                              {getRelativeTime(conversation.updatedAt)}
-                            </span>
+                        <div className="flex items-start justify-between">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleSelectConversation(conversationId);
+                              setMobileSidebarOpen(false);
+                            }}
+                            className="flex-1 text-left"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium truncate">{conversation.title}</span>
+                              <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
+                                {getRelativeTime(conversation.updatedAt)}
+                              </span>
+                            </div>
+                            {lastMessage ? (
+                              <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
+                                {lastMessage.content}
+                              </p>
+                            ) : null}
+                          </button>
+                          <div className="ml-2 flex-shrink-0">
                             <button
                               type="button"
                               aria-label={`Delete conversation ${conversation.title}`}
@@ -524,12 +544,7 @@ export function ChatShell() {
                             </button>
                           </div>
                         </div>
-                        {lastMessage ? (
-                          <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
-                            {lastMessage.content}
-                          </p>
-                        ) : null}
-                      </button>
+                      </div>
                     </li>
                   );
                 })}
