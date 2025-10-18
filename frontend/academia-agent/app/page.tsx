@@ -22,7 +22,6 @@ const highlights = [
   "AI-guided Q&A that surfaces accredited certificates, diplomas, and degrees across the U.S. and Canada",
   "Location-aware suggestions that balance commute, campus life, and regional job prospects",
   "Cost modeling that combines tuition, fees, housing, and aid so families understand the full picture",
-  "Secure sign-in with federated logins and Passkeys backed by AWS Amplify",
 ];
 
 export default function Home() {
