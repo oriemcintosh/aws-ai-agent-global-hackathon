@@ -513,7 +513,6 @@ export function ChatShell() {
                             type="button"
                             onClick={() => {
                               handleSelectConversation(conversationId);
-                              setMobileSidebarOpen(false);
                             }}
                             className="flex-1 text-left"
                           >
