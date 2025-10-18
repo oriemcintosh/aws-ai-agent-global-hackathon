@@ -432,7 +432,10 @@ export function ChatShell() {
             aria-label="Close conversation list"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <div className="ml-auto flex h-full w-[88%] max-w-sm flex-col border-l border-[var(--sidebar-border)] bg-[var(--sidebar)] shadow-lg">
+          <div
+            className="ml-auto flex h-full w-[88%] max-w-sm flex-col border-l border-[var(--sidebar-border)] bg-[var(--sidebar)] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-4 py-4">
               <h2 className="text-base font-semibold text-[var(--sidebar-foreground)]">Conversations</h2>
               <button
@@ -488,10 +491,7 @@ export function ChatShell() {
               <div className="flex items-center justify-between text-xs">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openExternal(PRIVACY_URL);
-                  }}
+                  onClick={() => openExternal(PRIVACY_URL)}
                   className="underline"
                   aria-label="Open privacy policy (opens in new tab)"
                 >
@@ -499,10 +499,7 @@ export function ChatShell() {
                 </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openExternal(MARKETPLACE_URL);
-                  }}
+                  onClick={() => openExternal(MARKETPLACE_URL)}
                   className="underline"
                   aria-label="Open AWS Marketplace listing (opens in new tab)"
                 >
