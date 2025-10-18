@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function TermsPage() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-12 sm:px-8">
@@ -81,6 +83,14 @@ export default function TermsPage() {
             Email: <a href="mailto:privacy@eighttwelveconsulting.com" className="text-[color-mix(in_srgb,var(--foreground)_85%,transparent)] hover:text-[var(--primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ring)]">privacy@eighttwelveconsulting.com</a>
           </address>
         </section>
+
+        <footer className="pt-8 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]">
+          <div className="flex gap-4 items-center text-sm">
+            <Link href="/" className="text-[color-mix(in_srgb,var(--foreground)_85%,transparent)] hover:text-[var(--primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ring)]">Home</Link>
+            <span className="text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]">·</span>
+            <Link href="/chat" className="text-[color-mix(in_srgb,var(--foreground)_85%,transparent)] hover:text-[var(--primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ring)]">Chat</Link>
+          </div>
+        </footer>
       </div>
     </main>
   );

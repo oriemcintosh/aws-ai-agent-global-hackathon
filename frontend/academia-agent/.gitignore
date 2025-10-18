@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# macOS Finder and resource-fork files
+._*
+.AppleDouble
+.LSOverride
+
+# Spotlight and Trash
+.Spotlight-V100
+.Trashes
+
+# Finder icon files
+Icon?
