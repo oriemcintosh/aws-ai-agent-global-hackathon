@@ -312,7 +312,7 @@ export function ChatShell() {
           <div className="hidden items-center gap-2 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] sm:flex">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             <a
-              href={process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby"}
+              href={MARKETPLACE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="underline"
