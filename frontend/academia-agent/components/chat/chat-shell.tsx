@@ -93,14 +93,8 @@ export function ChatShell() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const PRIVACY_URL = process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms";
-  const MARKETPLACE_URL =
-    process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
-
-  const openExternal = (url: string) => {
-    if (typeof window !== "undefined") {
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
-  };
+  const MARKETPLACE_URL = process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ??
+    "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
 
   useEffect(() => {
     setIsHydrated(true);
@@ -392,14 +386,15 @@ export function ChatShell() {
             />
             <div className="flex items-center justify-between text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => openExternal(PRIVACY_URL)}
+                <a
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline text-xs"
                   aria-label="Open privacy policy (opens in new tab)"
                 >
                   Privacy &amp; Terms
-                </button>
+                </a>
                 <p id="chat-helper-text">Press Enter to send, Shift + Enter for a new line.</p>
               </div>
               <button
@@ -421,20 +416,20 @@ export function ChatShell() {
 
       {isMobileSidebarOpen ? (
         <div
-          className="fixed inset-0 z-50 flex md:hidden"
+          className="fixed inset-0 z-50 md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Conversation list"
         >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/40"
-            aria-label="Close conversation list"
+          <div
+            className="absolute inset-0 bg-black/40" 
             onClick={() => setMobileSidebarOpen(false)}
+            aria-label="Close conversation list"
           />
           <div
-            className="ml-auto flex h-full w-[88%] max-w-sm flex-col border-l border-[var(--sidebar-border)] bg-[var(--sidebar)] shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col border-l border-[var(--sidebar-border)] bg-[var(--sidebar)] shadow-lg"
+            role="region"
+            aria-label="Mobile conversations sidebar"
           >
             <div className="flex items-center justify-between px-4 py-4">
               <h2 className="text-base font-semibold text-[var(--sidebar-foreground)]">Conversations</h2>
@@ -489,22 +484,24 @@ export function ChatShell() {
             </nav>
             <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
               <div className="flex items-center justify-between text-xs">
-                <button
-                  type="button"
-                  onClick={() => openExternal(PRIVACY_URL)}
+                <a
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline"
                   aria-label="Open privacy policy (opens in new tab)"
                 >
                   Privacy &amp; Terms
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openExternal(MARKETPLACE_URL)}
+                </a>
+                <a
+                  href={MARKETPLACE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline"
                   aria-label="Open AWS Marketplace listing (opens in new tab)"
                 >
                   Powered by AWS
-                </button>
+                </a>
               </div>
             </div>
           </div>
