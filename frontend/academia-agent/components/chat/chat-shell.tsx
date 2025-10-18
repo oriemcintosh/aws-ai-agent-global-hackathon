@@ -381,7 +381,17 @@ export function ChatShell() {
               aria-describedby="chat-helper-text"
             />
             <div className="flex items-center justify-between text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
-              <p id="chat-helper-text">Press Enter to send, Shift + Enter for a new line.</p>
+              <div className="flex items-center gap-3">
+                <a
+                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-xs"
+                >
+                  Privacy &amp; Terms
+                </a>
+                <p id="chat-helper-text">Press Enter to send, Shift + Enter for a new line.</p>
+              </div>
               <button
                 type="submit"
                 className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--primary-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -467,7 +477,7 @@ export function ChatShell() {
             <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
               <div className="flex items-center justify-between text-xs">
                 <Link
-                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/privacy"}
+                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline"
