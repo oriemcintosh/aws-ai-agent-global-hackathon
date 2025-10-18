@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, Menu, Plus, Send, Sparkles } from "lucide-react";
+import { Loader2, Menu, Plus, Send, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Conversation {
@@ -143,6 +143,32 @@ export function ChatShell() {
     setActiveConversationId(newId);
   };
 
+  const handleDeleteConversation = (conversationId: string) => {
+    // simple confirmation for now
+    const ok = confirm("Delete this conversation? This cannot be undone.");
+    if (!ok) return;
+
+    setConversations((prev) => {
+      const { [conversationId]: _removed, ...rest } = prev;
+      return rest;
+    });
+
+    setMessagesByConversation((prev) => {
+      const { [conversationId]: _removed, ...rest } = prev;
+      return rest;
+    });
+
+    setConversationOrder((prev) => prev.filter((id) => id !== conversationId));
+
+    setActiveConversationId((current) => {
+      if (current !== conversationId) return current;
+      // choose first available conversationOrder after deletion, or fallback to initial
+      const remaining = conversationOrder.filter((id) => id !== conversationId);
+      if (remaining.length > 0) return remaining[0];
+      return initialConversationId;
+    });
+  };
+
   const updateConversationMeta = (conversationId: string, fallbackTitle: string) => {
     setConversations((prev) => {
       const existing = prev[conversationId];
@@ -272,12 +298,25 @@ export function ChatShell() {
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
                     )}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium truncate">{conversation.title}</span>
-                      <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
-                        {getRelativeTime(conversation.updatedAt)}
-                      </span>
-                    </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium truncate">{conversation.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
+                            {getRelativeTime(conversation.updatedAt)}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Delete conversation ${conversation.title}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConversation(conversationId);
+                            }}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]"
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
                     {lastMessage ? (
                       <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
                         {lastMessage.content}
@@ -467,9 +506,23 @@ export function ChatShell() {
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium truncate">{conversation.title}</span>
-                          <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
-                            {getRelativeTime(conversation.updatedAt)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
+                              {getRelativeTime(conversation.updatedAt)}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Delete conversation ${conversation.title}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteConversation(conversationId);
+                                setMobileSidebarOpen(false);
+                              }}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </div>
                         </div>
                         {lastMessage ? (
                           <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
