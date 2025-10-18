@@ -92,6 +92,16 @@ export function ChatShell() {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  const PRIVACY_URL = process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms";
+  const MARKETPLACE_URL =
+    process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
+
+  const openExternal = (url: string) => {
+    if (typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   useEffect(() => {
     setIsHydrated(true);
   }, []);
@@ -382,14 +392,14 @@ export function ChatShell() {
             />
             <div className="flex items-center justify-between text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
               <div className="flex items-center gap-3">
-                <a
-                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => openExternal(PRIVACY_URL)}
                   className="underline text-xs"
+                  aria-label="Open privacy policy (opens in new tab)"
                 >
                   Privacy &amp; Terms
-                </a>
+                </button>
                 <p id="chat-helper-text">Press Enter to send, Shift + Enter for a new line.</p>
               </div>
               <button
@@ -476,23 +486,28 @@ export function ChatShell() {
             </nav>
             <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
               <div className="flex items-center justify-between text-xs">
-                <Link
-                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openExternal(PRIVACY_URL);
+                  }}
                   className="underline"
                   aria-label="Open privacy policy (opens in new tab)"
                 >
                   Privacy &amp; Terms
-                </Link>
-                <a
-                  href={process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openExternal(MARKETPLACE_URL);
+                  }}
                   className="underline"
+                  aria-label="Open AWS Marketplace listing (opens in new tab)"
                 >
                   Powered by AWS
-                </a>
+                </button>
               </div>
             </div>
           </div>
