@@ -298,25 +298,25 @@ export function ChatShell() {
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
                     )}
                   >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium truncate">{conversation.title}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
-                            {getRelativeTime(conversation.updatedAt)}
-                          </span>
-                          <button
-                            type="button"
-                            aria-label={`Delete conversation ${conversation.title}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConversation(conversationId);
-                            }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]"
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium truncate">{conversation.title}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[color-mix(in_srgb,var(--sidebar-foreground)_50%,transparent)]">
+                          {getRelativeTime(conversation.updatedAt)}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Delete conversation ${conversation.title}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConversation(conversationId);
+                          }}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
                       </div>
+                    </div>
                     {lastMessage ? (
                       <p className="mt-1 max-h-10 overflow-hidden text-ellipsis text-xs leading-snug opacity-80">
                         {lastMessage.content}
