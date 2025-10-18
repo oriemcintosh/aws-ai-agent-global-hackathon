@@ -1,0 +1,14 @@
+# Ignore macOS resource fork files (these cause parsing errors)
+**/._*
+
+# Next.js build artifacts and node_modules
+.next
+node_modules
+
+# TypeScript build info
+**/*.tsbuildinfo
+
+# Local env files
+.env
+.env.local
+.env.*.local
