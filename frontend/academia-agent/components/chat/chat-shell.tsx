@@ -308,7 +308,7 @@ export function ChatShell() {
           <div className="hidden items-center gap-2 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] sm:flex">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             <a
-              href={process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace"}
+              href={process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby"}
               target="_blank"
               rel="noopener noreferrer"
               className="underline"
@@ -464,6 +464,27 @@ export function ChatShell() {
                 })}
               </ul>
             </nav>
+            <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
+              <div className="flex items-center justify-between text-xs">
+                <Link
+                  href={process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/privacy"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                  aria-label="Open privacy policy (opens in new tab)"
+                >
+                  Privacy &amp; Terms
+                </Link>
+                <a
+                  href={process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Powered by AWS
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
