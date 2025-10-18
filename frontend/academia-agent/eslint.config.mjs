@@ -17,6 +17,8 @@ const eslintConfig = [
       ".next/**",
       "out/**",
       "build/**",
+      // Ignore Amplify generated build artifacts (contain CommonJS requires and non-React hook usage patterns)
+      ".amplify/artifacts/**",
       "next-env.d.ts",
       // ignore macOS resource fork files that appear as dot-prefixed files like `._file`
       "**/._*",
