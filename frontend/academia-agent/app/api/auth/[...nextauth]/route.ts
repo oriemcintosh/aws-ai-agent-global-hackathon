@@ -10,7 +10,7 @@ export const authOptions: NextAuthOptions = {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials?: Record<string, string> | undefined) {
+      async authorize(credentials?: { username?: string; password?: string } | undefined) {
         // Minimal dev-only auth: accept any username/password and return a user object
         if (!credentials) return null;
         const user = { id: credentials.username, name: credentials.username };
