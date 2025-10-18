@@ -158,13 +158,13 @@ export function ChatShell() {
       return rest;
     });
 
-    setConversationOrder((prev) => prev.filter((id) => id !== conversationId));
+    const remainingOrder = conversationOrder.filter((id) => id !== conversationId);
+    setConversationOrder(() => remainingOrder);
 
     setActiveConversationId((current) => {
       if (current !== conversationId) return current;
       // choose first available conversationOrder after deletion, or fallback to initial
-      const remaining = conversationOrder.filter((id) => id !== conversationId);
-      if (remaining.length > 0) return remaining[0];
+      if (remainingOrder.length > 0) return remainingOrder[0];
       return initialConversationId;
     });
   };
