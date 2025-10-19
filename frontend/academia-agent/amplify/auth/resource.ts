@@ -6,12 +6,18 @@ import { defineAuth, secret } from '@aws-amplify/backend';
  */
 export const auth = defineAuth({
   loginWith: {
-    // email: {
-    //   verificationEmailStyle: 'CODE',
-    //   verificationEmailSubject: 'Thank you for signing up to use Academia Agent!',
-    //   verificationEmailBody: (createCode) => `Here is your verification code: ${createCode()}`,
-    // },
-    email: true,
+    email: {
+      verificationEmailStyle: 'CODE',
+      verificationEmailSubject: 'Thank you for signing up to use Academia Agent!',
+      verificationEmailBody: (createCode) => `Here is your verification code: ${createCode()}`,
+    },
+  },
+  senders: {
+    email: {
+      fromEmail: 'support@academiaagent.com',
+      fromName: 'Academia Agent',
+      replyTo: 'support@academiaagent.com',
+    },
     // externalProviders: {
     //   signInWithApple: {
     //     clientId: secret('SIWA_CLIENT_ID'),
