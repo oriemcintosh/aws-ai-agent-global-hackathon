@@ -4,14 +4,7 @@ import { ChatShell } from "@/components/chat/chat-shell";
 
 import AuthenticatorWrapper from "@/components/amplifyAuth/AuthenticatorWrapper";
 
-import { Amplify } from 'aws-amplify';
-import outputs from "../../amplify_outputs.json";
-
-// Ensure Amplify is configured only in the browser and that the imported
-// JSON is available. The named-import used previously produced `undefined`.
-if (typeof window !== 'undefined' && outputs) {
-  Amplify.configure(outputs);
-}
+// Amplify is configured once on the client by `lib/amplifyInit.tsx` mounted in the root layout.
 
 export default function ChatPage() {
   return (
