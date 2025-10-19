@@ -51,3 +51,8 @@ next-env.d.ts
 
 # Finder icon files
 Icon?
+
+# amplify
+.amplify
+amplify_outputs*
+amplifyconfiguration*
