@@ -124,7 +124,17 @@ export function ChatShell() {
       const stillSignedIn = user != null;
       if (stillSignedIn) {
         try {
-          const AmplifyModule: any = await import('aws-amplify');
+          // Narrowly type the expected shape of the aws-amplify module we need
+          type AmplifyAuthShape = {
+            signOut: (options?: { global?: boolean }) => Promise<void> | Promise<any>;
+          };
+
+          type AmplifyModuleShape = {
+            Auth?: AmplifyAuthShape;
+            default?: { Auth?: AmplifyAuthShape };
+          };
+
+          const AmplifyModule: AmplifyModuleShape = (await import('aws-amplify')) as AmplifyModuleShape;
           const Auth = AmplifyModule.Auth ?? AmplifyModule.default?.Auth;
           if (Auth && typeof Auth.signOut === 'function') {
             // Ask Cognito to sign out globally when possible
