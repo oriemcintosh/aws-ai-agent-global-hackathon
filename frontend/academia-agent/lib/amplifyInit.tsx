@@ -8,7 +8,7 @@ export default function AmplifyInit() {
   useEffect(() => {
     try {
       if (outputs) {
-        Amplify.configure(outputs as any);
+        Amplify.configure(outputs as unknown);
       }
     } catch (e) {
       // swallow during dev; log for diagnostics
