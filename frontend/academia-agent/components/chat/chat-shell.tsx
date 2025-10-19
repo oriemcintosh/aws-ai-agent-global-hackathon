@@ -108,7 +108,7 @@ export function ChatShell() {
         }
       }
     } catch (e) {
-      // ignore
+      console.warn('Failed to clear Amplify localStorage:', e);
     }
   };
 
