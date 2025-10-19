@@ -59,7 +59,7 @@ export default function AuthenticatorWrapper({ children }: { children?: ReactNod
               <Authenticator
                 // socialProviders={['amazon', 'apple', 'facebook', 'google']}
               >
-                {({ user }: { user?: any }) => <>{children}</>}
+                {() => <>{children}</>}
               </Authenticator>
             </View>
           </ThemeProvider>
