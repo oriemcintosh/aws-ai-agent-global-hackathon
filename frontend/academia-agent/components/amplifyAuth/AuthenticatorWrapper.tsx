@@ -56,10 +56,11 @@ export default function AuthenticatorWrapper({ children }: { children?: ReactNod
         <div className="w-full max-w-md">
           <ThemeProvider theme={theme}>
             <View padding="medium">
-              <Authenticator 
-                socialProviders={['amazon', 'apple', 'facebook', 'google']}
-              />
-              {children}
+              <Authenticator
+                // socialProviders={['amazon', 'apple', 'facebook', 'google']}
+              >
+                {({ user }: { user?: any }) => <>{children}</>}
+              </Authenticator>
             </View>
           </ThemeProvider>
         </div>
