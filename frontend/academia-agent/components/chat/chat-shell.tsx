@@ -117,8 +117,17 @@ export function ChatShell() {
       // Try the UI hook signOut first
       await signOut();
 
-      // Wait briefly to give Authenticator a chance to update user state
-      await new Promise((r) => setTimeout(r, 500));
+      // Wait for Authenticator user state to update (user becomes null), up to 5 seconds
+      const waitForSignOut = async () => {
+        const interval = 100;
+        const maxWait = 5000;
+        let waited = 0;
+        while (user != null && waited < maxWait) {
+          await new Promise((r) => setTimeout(r, interval));
+          waited += interval;
+        }
+      };
+      await waitForSignOut();
 
       // If user is still present, fall back to calling Amplify Auth.signOut with global flag
       const stillSignedIn = user != null;
