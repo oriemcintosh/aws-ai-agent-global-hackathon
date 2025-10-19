@@ -1,0 +1,37 @@
+/* Small overrides to prevent Amplify UI from breaking global layout on desktop */
+
+/* Make sure Amplify components use border-box so padding doesn't inflate widths */
+.amplify-authenticator,
+.amplify-authenticator * {
+  box-sizing: border-box !important;
+}
+
+/* Constrain the authenticator container width so it doesn't stretch full-viewport */
+.amplify-authenticator {
+  width: auto !important;
+  max-width: 640px !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  /* Center vertically in the viewport */
+  min-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure form elements don't overflow */
+.amplify-form,
+.amplify-form * {
+  max-width: 100% !important;
+}
+
+/* Do not force full-height on internal containers */
+.amplify-auth-container {
+  height: auto !important;
+}
+
+/* Slightly increase specificity for common problematic rules */
+.auth-wrapper .amplify-authenticator,
+.auth-wrapper .amplify-authenticator * {
+  box-sizing: border-box !important;
+}

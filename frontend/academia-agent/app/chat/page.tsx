@@ -1,7 +1,10 @@
+"use client";
+
 import { ChatShell } from "@/components/chat/chat-shell";
 
 import AuthenticatorWrapper from "@/components/amplifyAuth/AuthenticatorWrapper";
-import "@aws-amplify/ui-react/styles.css";
+
+// Amplify is configured once on the client by `lib/amplifyInit.tsx` mounted in the root layout.
 
 export default function ChatPage() {
   return (
