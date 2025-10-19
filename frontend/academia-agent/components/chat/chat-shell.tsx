@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, Menu, Plus, Send, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Menu, Plus, Send, Sparkles, Trash2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthenticator } from '@aws-amplify/ui-react';
 
 interface Conversation {
   id: string;
@@ -95,6 +96,54 @@ export function ChatShell() {
   const PRIVACY_URL = process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms";
   const MARKETPLACE_URL = process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ??
     "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
+
+  const { signOut, user } = useAuthenticator((context) => [context.signOut, context.user]);
+
+  const clearAmplifyLocalStorage = () => {
+    try {
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (/amplify|CognitoIdentityServiceProvider|aws-amplify|AWSCognito/i.test(key)) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // Try the UI hook signOut first
+      await signOut();
+
+      // Wait briefly to give Authenticator a chance to update user state
+      await new Promise((r) => setTimeout(r, 500));
+
+      // If user is still present, fall back to calling Amplify Auth.signOut with global flag
+      const stillSignedIn = !!(user);
+      if (stillSignedIn) {
+        try {
+          const AmplifyModule: any = await import('aws-amplify');
+          const Auth = AmplifyModule.Auth ?? AmplifyModule.default?.Auth;
+          if (Auth && typeof Auth.signOut === 'function') {
+            // Ask Cognito to sign out globally when possible
+            await Auth.signOut({ global: true });
+          }
+        } catch (e) {
+          console.warn('Fallback amplify signOut failed', e);
+        }
+
+        // Clear amplify-related localStorage keys and reload
+        clearAmplifyLocalStorage();
+      }
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Sign out failed", err);
+      alert("Sign out failed. Please try again.");
+    }
+  };
 
   useEffect(() => {
     setIsHydrated(true);
@@ -368,6 +417,14 @@ export function ChatShell() {
             >
               Powered by AWS Bedrock AgentCore
             </a>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="ml-4 inline-flex items-center gap-2 rounded-md px-3 py-1 text-sm text-[color-mix(in_srgb,var(--foreground)_80%,transparent)] hover:bg-[var(--card)]"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
           </div>
         </header>
 
@@ -572,6 +629,19 @@ export function ChatShell() {
                 >
                   Powered by AWS
                 </a>
+              </div>
+              <div className="mt-3 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileSidebarOpen(false);
+                    handleSignOut();
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)]"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
               </div>
             </div>
           </div>

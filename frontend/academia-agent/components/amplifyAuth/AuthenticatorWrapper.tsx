@@ -1,16 +1,19 @@
 "use client"
-
+import "@aws-amplify/ui-react/styles.css";
+import "@/styles/amplify-overrides.css";
 import {
   Authenticator,
   ThemeProvider,
   Theme,
   useTheme,
   View,
+  useAuthenticator,
 } from '@aws-amplify/ui-react';
 import type { ReactNode } from 'react';
 
 export default function AuthenticatorWrapper({ children }: { children?: ReactNode }) {
   const { tokens } = useTheme();
+  
   const theme: Theme = {
     name: 'Auth Example Theme',
     tokens: {
@@ -50,20 +53,17 @@ export default function AuthenticatorWrapper({ children }: { children?: ReactNod
     },
   };
 
+  function AuthInner({ children }: { children?: ReactNode }) {
+    const { user } = useAuthenticator();
+    if (!user) return null;
+    return <>{children}</>;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      {/* constrain width so the Authenticator doesn't stretch too wide on large screens */}
-        <div className="w-full max-w-md">
-          <ThemeProvider theme={theme}>
-            <View padding="medium">
-              <Authenticator
-                // socialProviders={['amazon', 'apple', 'facebook', 'google']}
-              >
-                {() => <>{children}</>}
-              </Authenticator>
-            </View>
-          </ThemeProvider>
-        </div>
-    </div>
+    <ThemeProvider theme={theme}>
+      <Authenticator>
+        <AuthInner>{children}</AuthInner>
+      </Authenticator>
+    </ThemeProvider>
   );
 }
