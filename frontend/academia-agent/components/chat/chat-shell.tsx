@@ -121,7 +121,7 @@ export function ChatShell() {
       await new Promise((r) => setTimeout(r, 500));
 
       // If user is still present, fall back to calling Amplify Auth.signOut with global flag
-      const stillSignedIn = !!(user);
+      const stillSignedIn = user != null;
       if (stillSignedIn) {
         try {
           const AmplifyModule: any = await import('aws-amplify');
