@@ -126,7 +126,7 @@ export function ChatShell() {
         try {
           // Narrowly type the expected shape of the aws-amplify module we need
           type AmplifyAuthShape = {
-            signOut: (options?: { global?: boolean }) => Promise<void> | Promise<any>;
+            signOut: (options?: { global?: boolean }) => Promise<void>;
           };
 
           type AmplifyModuleShape = {
