@@ -10,7 +10,7 @@ export const auth = defineAuth({
       verificationEmailStyle: 'CODE',
       verificationEmailSubject: 'Thank you for signing up to use Academia Agent!',
       verificationEmailBody: (createCode) => `Here is your verification code: ${createCode()}`,
-    },      
+    },
   },
   senders: {
     email: {
