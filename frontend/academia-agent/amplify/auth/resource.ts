@@ -18,7 +18,6 @@ export const auth = defineAuth({
       fromName: 'Academia Agent',
       replyTo: 'support@academiaagent.com',
     },
-    // email: true,
     // externalProviders: {
     //   signInWithApple: {
     //     clientId: secret('SIWA_CLIENT_ID'),
