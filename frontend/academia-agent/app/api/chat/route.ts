@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { sendMessageToAcademia } from "@/lib/amplifyClient";
 
 interface ChatRequestBody {
   message?: string;
   conversationId?: string;
+  authToken?: string;
 }
 
 export async function POST(request: Request) {
@@ -26,10 +28,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const responseText = `Echoing: ${prompt}`;
+  if (!payload.authToken) {
+    return NextResponse.json(
+      { error: "Authentication token is required." },
+      { status: 401 }
+    );
+  }
 
-  return NextResponse.json({
-    message: responseText,
-    conversationId: payload.conversationId ?? null,
-  });
+  try {
+    const assistantText = await sendMessageToAcademia(payload.authToken, payload.conversationId, prompt);
+    return NextResponse.json({ message: assistantText ?? null, conversationId: payload.conversationId ?? null });
+  } catch (e) {
+    console.error("Chat backend error:", e);
+    return NextResponse.json(
+      { error: "Assistant service error." },
+      { status: 502 }
+    );
+  }
 }

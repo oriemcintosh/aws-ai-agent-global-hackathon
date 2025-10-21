@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Menu, Plus, Send, Sparkles, Trash2, LogOut } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { sendMessageToAcademia } from "@/lib/amplifyClient";
 
 interface Conversation {
   id: string;
@@ -282,20 +284,12 @@ export function ChatShell() {
     updateConversationMeta(conversationId, trimmed.slice(0, 60));
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: trimmed,
-          conversationId,
-        }),
-      });
-
-      const data: { message?: string } = response.ok ? await response.json() : {};
-      const assistantContent = data.message ??
-        "I was unable to reach the assistant service. Please try again in a moment.";
+      // Call Amplify Data conversation API directly from client
+      const assistantContent = await sendMessageToAcademia(conversationId, trimmed);
+      
+      if (!assistantContent) {
+        throw new Error("No response from assistant");
+      }
 
       const agentMessage: ChatMessage = {
         id: createId(),
@@ -309,11 +303,12 @@ export function ChatShell() {
         [conversationId]: [...(prev[conversationId] ?? []), agentMessage],
       }));
       updateConversationMeta(conversationId, trimmed.slice(0, 60));
-  } catch {
+  } catch (error) {
+      console.error("Error sending message:", error);
       const fallbackMessage: ChatMessage = {
         id: createId(),
         role: "agent",
-        content: "Something went wrong while sending your message. Check your connection and try again.",
+        content: error instanceof Error ? error.message : "Something went wrong while sending your message. Check your connection and try again.",
         createdAt: now(),
       };
 
@@ -448,43 +443,29 @@ export function ChatShell() {
         </header>
 
         <main className="flex-1 overflow-hidden">
-          <section
-            ref={scrollRef}
-            className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-6 sm:px-6"
-            role="log"
-            aria-live="polite"
-            aria-label="Conversation messages"
-          >
-            {messages.length === 0 ? (
-              <div className="mx-auto flex max-w-xl flex-col items-center gap-2 text-center text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]">
-                <Sparkles className="h-5 w-5" aria-hidden="true" />
-                <p>Start the conversation by sending a message.</p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <article
-                  key={message.id}
-                  className={cn(
-                    "flex w-full flex-col gap-2",
-                    message.role === "user" ? "items-end" : "items-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[min(100%,_700px)] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
-                      message.role === "user"
-                        ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                        : "bg-[color-mix(in_srgb,var(--card)_85%,var(--primary)_15%)] text-[var(--foreground)]"
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+          <section ref={scrollRef} className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-6 sm:px-6">
+            <div className="mx-auto w-full max-w-3xl space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                  <div className={msg.role === "user" 
+                    ? "max-w-[80%] rounded-2xl bg-blue-600 px-4 py-2 text-white" 
+                    : "max-w-[80%] rounded-2xl bg-gray-100 px-4 py-2 text-gray-900"
+                  }>
+                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+                    <div className="mt-1 text-xs opacity-70">
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </div>
                   </div>
-                  <time className="text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
-                    {getRelativeTime(message.createdAt)}
-                  </time>
-                </article>
-              ))
-            )}
+                </div>
+              ))}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl bg-gray-100 px-4 py-2 text-gray-900">
+                    <p className="text-sm">Thinking...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         </main>
 

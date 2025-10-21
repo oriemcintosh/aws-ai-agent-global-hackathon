@@ -8,12 +8,15 @@ export default function AmplifyInit() {
   useEffect(() => {
     try {
       if (outputs) {
-        Amplify.configure(outputs as ResourcesConfig);
+        // Configure Amplify for client-side usage (no SSR)
+        Amplify.configure(outputs as ResourcesConfig, {
+          ssr: false // Explicitly disable SSR for client-side
+        });
+        console.log("Amplify configured successfully on client");
       }
     } catch (e) {
       // swallow during dev; log for diagnostics
-      // eslint-disable-next-line no-console
-      console.warn("Amplify configure failed", e);
+      console.error("Amplify configure failed", e);
     }
   }, []);
 
