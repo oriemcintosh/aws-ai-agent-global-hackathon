@@ -30,6 +30,7 @@ function getClient() {
   if (!clientInstance) {
     console.log("Creating Amplify Data client...");
     clientInstance = generateClient<Schema>({ authMode: "userPool" });
+    console.log("✅ Client created successfully");
   }
 
   return clientInstance;
@@ -117,6 +118,16 @@ export async function sendMessageToAcademia(conversationId: string | undefined, 
 
   console.log("sendMessageToAcademia called with:", { conversationId, text });
   
+  // Check authentication first
+  try {
+    const { getCurrentUser } = await import('aws-amplify/auth');
+    const user = await getCurrentUser();
+    console.log("✅ User authenticated:", user.username);
+  } catch (authError) {
+    console.error("❌ Authentication failed:", authError);
+    throw new Error("User not authenticated. Please sign in first.");
+  }
+  
   const conversation = await getOrCreateConversation(conversationId);
   console.log("Got conversation:", conversation);
 
@@ -131,11 +142,13 @@ export async function sendMessageToAcademia(conversationId: string | undefined, 
       const sendFn = conv.sendMessage as unknown as (payload: unknown) => Promise<{ data?: unknown; errors?: unknown }>;
       const result = await sendFn({ content: [{ text }] });
       console.log("sendMessage result:", result);
+      console.log("sendMessage result (stringified):", JSON.stringify(result, null, 2));
       
       const { data: message, errors } = result;
       
       if (errors) {
         console.error("Amplify Data errors:", errors);
+        console.error("Errors (stringified):", JSON.stringify(errors, null, 2));
         throw new Error(`Amplify Data error: ${JSON.stringify(errors)}`);
       }
       
@@ -147,6 +160,7 @@ export async function sendMessageToAcademia(conversationId: string | undefined, 
       // Parse the response message
       const msg = message as unknown as Record<string, unknown>;
       console.log("Message shape:", { keys: Object.keys(msg), msg });
+      console.log("Full message object:", JSON.stringify(message, null, 2));
       
       const content: unknown = msg.content ?? msg.output ?? msg.response ?? null;
       

@@ -101,6 +101,38 @@ export function ChatShell() {
 
   const { signOut, user } = useAuthenticator((context) => [context.signOut, context.user]);
 
+  // Debug function - expose to window for console testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).debugChat = async () => {
+        console.log('=== Chat Debug Info ===');
+        console.log('User:', user);
+        console.log('Conversations:', conversations);
+        console.log('Active conversation:', activeConversationId);
+        console.log('Messages:', messagesByConversation[activeConversationId]);
+        
+        // Test sending a message
+        try {
+          console.log('Testing message send...');
+          const result = await sendMessageToAcademia('debug-test', 'Debug test message');
+          console.log('✓ Message send result:', result);
+        } catch (error) {
+          console.error('✗ Message send failed:', error);
+        }
+      };
+      
+      (window as any).testAmplifyConnection = async () => {
+        try {
+          const { testAmplifyChat } = await import('@/lib/testAmplifyChat');
+          const result = await testAmplifyChat();
+          console.log('Amplify test result:', result);
+        } catch (error) {
+          console.error('Amplify test failed:', error);
+        }
+      };
+    }
+  }, [user, conversations, activeConversationId, messagesByConversation]);
+
   const clearAmplifyLocalStorage = () => {
     try {
       const keys = Object.keys(localStorage);
@@ -275,6 +307,8 @@ export function ChatShell() {
       createdAt,
     };
 
+    console.log('🚀 Sending message:', { conversationId, text: trimmed, user: user?.username });
+
     setPendingInput("");
     setIsSending(true);
     setMessagesByConversation((prev) => ({
@@ -285,7 +319,9 @@ export function ChatShell() {
 
     try {
       // Call Amplify Data conversation API directly from client
+      console.log('📡 Calling sendMessageToAcademia...');
       const assistantContent = await sendMessageToAcademia(conversationId, trimmed);
+      console.log('✅ Got response:', assistantContent);
       
       if (!assistantContent) {
         throw new Error("No response from assistant");
@@ -304,11 +340,14 @@ export function ChatShell() {
       }));
       updateConversationMeta(conversationId, trimmed.slice(0, 60));
   } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("❌ Error sending message:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack');
+      
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong while sending your message. Check your connection and try again.";
       const fallbackMessage: ChatMessage = {
         id: createId(),
         role: "agent",
-        content: error instanceof Error ? error.message : "Something went wrong while sending your message. Check your connection and try again.",
+        content: `Error: ${errorMessage}\n\nPlease check the browser console for more details.`,
         createdAt: now(),
       };
 
