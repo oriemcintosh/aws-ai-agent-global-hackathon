@@ -9,7 +9,7 @@ This is a local Bedrock AgentCore / Strands agent wrapper for the Academia Agent
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r ../requirements.txt  # or install bedrock_agentcore and strands packages
+pip install -r requirements.txt  # or install bedrock_agentcore and strands packages
 ```
 
 1. Set AGENT_ARN if you want to call a remote Bedrock Agent runtime (not required for local Strands Agent):
