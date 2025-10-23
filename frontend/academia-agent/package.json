@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.13.0",
+    "@aws-amplify/ui-react-ai": "^1.5.0",
     "aws-amplify": "^6.15.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,7 +20,10 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "sharp": "^0.34.4",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+  "jose": "^6.1.0",
+    "react-markdown": "^9.0.0",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",

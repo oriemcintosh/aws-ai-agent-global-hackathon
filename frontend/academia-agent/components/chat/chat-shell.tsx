@@ -3,24 +3,69 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Menu, Plus, Send, Sparkles, Trash2, LogOut } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { generateClient } from 'aws-amplify/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-interface Conversation {
+// Lazy client initialization to ensure Amplify is configured first
+let clientInstance: ReturnType<typeof generateClient> | null = null;
+const getClient = () => {
+  if (!clientInstance) {
+    clientInstance = generateClient();
+  }
+  return clientInstance;
+};
+
+// GraphQL mutation to send messages
+const sendMessageMutation = /* GraphQL */ `
+  mutation SendMessage($conversationId: ID!, $content: String!) {
+    sendMessage(conversationId: $conversationId, content: $content) {
+      id
+      conversationId
+      role
+      content
+      timestamp
+    }
+  }
+`;
+
+// GraphQL subscription for real-time message updates
+const onMessageReceivedSubscription = /* GraphQL */ `
+  subscription OnMessageReceived($conversationId: ID!) {
+    onMessageReceived(conversationId: $conversationId) {
+      id
+      conversationId
+      role
+      content
+      timestamp
+    }
+  }
+`;
+
+interface MessageFromAppSync {
+  id: string;
+  conversationId: string;
+  role: string;
+  content: string;
+  timestamp: string;
+}
+
+// Simplified Conversation Summary for the sidebar
+interface ConversationSummary {
   id: string;
   title: string;
   updatedAt: string;
 }
 
+// Unified message type for local and hook-based messages
 interface ChatMessage {
   id: string;
   role: "user" | "agent";
   content: string;
   createdAt: string;
-}
-
-interface MessagesState {
-  [conversationId: string]: ChatMessage[];
 }
 
 const initialIntro = `Welcome! I can help you explore post-secondary programs tailored to your field of study / interests, career goals, preferred locations, and budget.\n\nShare any details you know and I'll surface schools, programs, and cost insights that fit.`;
@@ -36,68 +81,276 @@ const createId = () => {
 };
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-
 const relativeTimeFallback = "just now";
 
 const formatRelativeTime = (isoString: string) => {
-  const value = new Date(isoString).getTime();
-  const nowValue = Date.now();
-  const diff = value - nowValue;
+  try {
+    const value = new Date(isoString).getTime();
+    const nowValue = Date.now();
+    const diff = value - nowValue;
 
-  const seconds = Math.round(diff / 1000);
-  const minutes = Math.round(diff / (1000 * 60));
-  const hours = Math.round(diff / (1000 * 60 * 60));
-  const days = Math.round(diff / (1000 * 60 * 60 * 24));
+    const seconds = Math.round(diff / 1000);
+    if (Math.abs(seconds) < 60) return rtf.format(seconds, "second");
+    
+    const minutes = Math.round(diff / (1000 * 60));
+    if (Math.abs(minutes) < 60) return rtf.format(minutes, "minute");
 
-  if (Math.abs(seconds) < 60) {
-    return rtf.format(seconds, "second");
+    const hours = Math.round(diff / (1000 * 60 * 60));
+    if (Math.abs(hours) < 24) return rtf.format(hours, "hour");
+
+    const days = Math.round(diff / (1000 * 60 * 60 * 24));
+    return rtf.format(days, "day");
+  } catch {
+    return relativeTimeFallback;
   }
-  if (Math.abs(minutes) < 60) {
-    return rtf.format(minutes, "minute");
-  }
-  if (Math.abs(hours) < 24) {
-    return rtf.format(hours, "hour");
-  }
-  return rtf.format(days, "day");
 };
 
-const initialConversationId = "welcome";
-
-const initialConversations: Record<string, Conversation> = {
-  [initialConversationId]: {
-    id: initialConversationId,
-    title: "Welcome",
-    updatedAt: now(),
-  },
-};
-
-const initialMessages: MessagesState = {
-  [initialConversationId]: [
-    {
-      id: createId(),
-      role: "agent",
-      content: initialIntro,
-      createdAt: now(),
-    },
-  ],
-};
+const initialConversationId = "welcome-chat";
 
 export function ChatShell() {
   const [isHydrated, setIsHydrated] = useState(false);
-  const [conversations, setConversations] = useState<Record<string, Conversation>>(initialConversations);
+  const [conversations, setConversations] = useState<Record<string, ConversationSummary>>({
+    [initialConversationId]: { id: initialConversationId, title: "Welcome", updatedAt: now() },
+  });
   const [conversationOrder, setConversationOrder] = useState<string[]>([initialConversationId]);
-  const [messagesByConversation, setMessagesByConversation] = useState<MessagesState>(initialMessages);
   const [activeConversationId, setActiveConversationId] = useState<string>(initialConversationId);
   const [pendingInput, setPendingInput] = useState<string>("");
-  const [isSending, setIsSending] = useState<boolean>(false);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Local messages for the initial welcome chat, which is not backed by the hook.
+  const [localMessages, setLocalMessages] = useState<Record<string, ChatMessage[]>>({
+    [initialConversationId]: [{ id: createId(), role: 'agent', content: initialIntro, createdAt: now() }]
+  });
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const PRIVACY_URL = process.env.NEXT_PUBLIC_PRIVACY_URL ?? "/terms";
-  const MARKETPLACE_URL = process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ??
-    "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
+  const MARKETPLACE_URL = process.env.NEXT_PUBLIC_AWS_MARKETPLACE_URL ?? "https://aws.amazon.com/marketplace/pp/prodview-rdvz6pmeimdby";
 
   const { signOut, user } = useAuthenticator((context) => [context.signOut, context.user]);
+  
+  // For this simplified version, all conversations use local state and the /api/chat fallback
+  // (No Amplify AI conversation hooks since they're not configured in the data schema)
+  const activeMessages: ChatMessage[] = useMemo(() => {
+    return localMessages[activeConversationId] ?? [];
+  }, [localMessages, activeConversationId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [activeMessages]);
+
+  // Subscribe to real-time message updates from AppSync
+  useEffect(() => {
+    if (!activeConversationId || activeConversationId === initialConversationId) {
+      return; // Don't subscribe for the welcome chat
+    }
+
+    const sub = getClient().graphql({
+      query: onMessageReceivedSubscription,
+      variables: { conversationId: activeConversationId },
+    });
+
+    // Type assertion for subscription
+    if ('subscribe' in sub) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const subscription = (sub as any).subscribe({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        next: (event: any) => {
+          const message = event.data?.onMessageReceived as MessageFromAppSync;
+          if (!message) return;
+          
+          // Only add assistant messages from subscription (user messages added immediately)
+          if (message.role === 'assistant' || message.role === 'agent') {
+            const newMsg: ChatMessage = {
+              id: message.id,
+              role: 'agent',
+              content: message.content,
+              createdAt: message.timestamp,
+            };
+
+            setLocalMessages(prev => {
+              const conv = prev[activeConversationId] ?? [];
+              // Check if message already exists to avoid duplicates
+              if (conv.some(m => m.id === newMsg.id)) {
+                return prev;
+              }
+              return { ...prev, [activeConversationId]: [...conv, newMsg] };
+            });
+            
+            setIsLoading(false);
+          }
+        },
+        error: (error: Error) => {
+          console.error('AppSync subscription error:', error);
+          setIsLoading(false);
+        },
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [activeConversationId]);
+
+  // Hydration check
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  const handleSelectConversation = (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setMobileSidebarOpen(false);
+  };
+
+  const handleCreateConversation = async () => {
+    const newId = createId();
+    const createdAt = now();
+    
+    setConversations(prev => ({
+      ...prev,
+      [newId]: { id: newId, title: "New Chat", updatedAt: createdAt },
+    }));
+    setConversationOrder(prev => [newId, ...prev]);
+    setActiveConversationId(newId);
+    setMobileSidebarOpen(false);
+    // The hook will automatically start a new conversation on the backend
+    // when `send` is called with a new `conversationId`.
+  };
+
+  const handleDeleteConversation = (conversationId: string) => {
+    if (conversationId === initialConversationId) return;
+    const ok = confirm("Delete this conversation? This cannot be undone.");
+    if (!ok) return;
+
+    setConversations(prev => {
+      const newState = { ...prev };
+      delete newState[conversationId];
+      return newState;
+    });
+    setConversationOrder(prev => prev.filter(id => id !== conversationId));
+    
+    if (activeConversationId === conversationId) {
+      setActiveConversationId(conversationOrder.find(id => id !== conversationId) ?? initialConversationId);
+    }
+    setMobileSidebarOpen(false);
+  };
+
+  const updateConversationMeta = (conversationId: string, fallbackTitle: string) => {
+    setConversations(prev => {
+      const existing = prev[conversationId];
+      if (!existing) return prev;
+      const hasRealTitle = existing.title && existing.title !== "New Chat";
+      return {
+        ...prev,
+        [conversationId]: {
+          ...existing,
+          title: hasRealTitle ? existing.title : fallbackTitle,
+          updatedAt: now(),
+        },
+      };
+    });
+    setConversationOrder(prev => [conversationId, ...prev.filter(id => id !== conversationId)]);
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = pendingInput.trim();
+    if (!trimmed || isLoading) return;
+
+    setPendingInput("");
+    setIsLoading(true);
+
+    // Add user message locally
+    const userMsg: ChatMessage = { id: createId(), role: 'user', content: trimmed, createdAt: now() };
+    setLocalMessages(prev => {
+      const conv = prev[activeConversationId] ?? [];
+      return { ...prev, [activeConversationId]: [...conv, userMsg] };
+    });
+
+    try {
+      const result = await getClient().graphql({
+        query: sendMessageMutation,
+        variables: { conversationId: activeConversationId, content: trimmed },
+      });
+
+      console.log('AppSync mutation result:', result);
+      const errors = (result as { errors?: Array<{ message?: string }> }).errors;
+      if (errors && errors.length > 0) {
+        console.error('GraphQL errors:', errors);
+        throw new Error(errors[0].message || 'GraphQL mutation failed');
+      }
+
+      // Attempt to extract the assistant message directly from mutation result (not waiting for subscription)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawMessage: any = (result as any).data?.sendMessage;
+      if (rawMessage && rawMessage.content) {
+        let parsedContent = rawMessage.content;
+        // If content is a JSON string with nested structure { result: { content: [{text: ...}] } }
+        try {
+          const maybeJson = JSON.parse(rawMessage.content);
+          if (maybeJson && typeof maybeJson === 'object') {
+            // Common shapes
+            if (maybeJson.result && maybeJson.result.content && Array.isArray(maybeJson.result.content)) {
+              parsedContent = maybeJson.result.content.map((c: { text?: string }) => c.text || '').join('\n');
+            } else if (maybeJson.content && Array.isArray(maybeJson.content)) {
+              parsedContent = maybeJson.content.map((c: { text?: string }) => c.text || '').join('\n');
+            }
+          }
+        } catch {
+          // not JSON, keep original string
+        }
+
+        const assistantMsg: ChatMessage = {
+          id: rawMessage.id,
+          role: 'agent',
+          content: parsedContent,
+          createdAt: rawMessage.timestamp || now(),
+        };
+        setLocalMessages(prev => {
+          const conv = prev[activeConversationId] ?? [];
+          // Avoid duplicates if subscription also delivers it later
+          if (conv.some(m => m.id === assistantMsg.id)) return prev;
+          return { ...prev, [activeConversationId]: [...conv, assistantMsg] };
+        });
+      }
+
+      updateConversationMeta(activeConversationId, trimmed.slice(0, 60));
+      setIsLoading(false); // stop loading after mutation response
+    } catch (err) {
+      console.error('AppSync mutation failed:', err);
+      
+      // Log detailed error information
+      if (err && typeof err === 'object' && 'errors' in err) {
+        console.error('GraphQL errors detail:', (err as { errors: unknown }).errors);
+      }
+      
+      setIsLoading(false);
+      
+      // Add error message locally
+      const errorMsg: ChatMessage = {
+        id: createId(),
+        role: 'agent',
+        content: `Error: ${err instanceof Error ? err.message : 'Failed to send message'}`,
+        createdAt: now()
+      };
+      setLocalMessages(prev => {
+        const conv = prev[activeConversationId] ?? [];
+        return { ...prev, [activeConversationId]: [...conv, errorMsg] };
+      });
+    }
+  };
+
+  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const getRelativeTime = (isoString: string) => isHydrated ? formatRelativeTime(isoString) : relativeTimeFallback;
 
   const clearAmplifyLocalStorage = () => {
     try {
@@ -114,10 +367,7 @@ export function ChatShell() {
 
   const handleSignOut = async () => {
     try {
-      // Try the UI hook signOut first
       await signOut();
-
-      // Wait for Authenticator user state to update (user becomes null), up to 5 seconds
       const waitForSignOut = async () => {
         const interval = 100;
         const maxWait = 5000;
@@ -128,213 +378,26 @@ export function ChatShell() {
         }
       };
       await waitForSignOut();
-
-      // If user is still present, fall back to calling Amplify Auth.signOut with global flag
-      const stillSignedIn = user != null;
-      if (stillSignedIn) {
+      if (user != null) {
         try {
-          // Narrowly type the expected shape of the aws-amplify module we need
-          type AmplifyAuthShape = {
-            signOut: (options?: { global?: boolean }) => Promise<void>;
-          };
-
-          type AmplifyModuleShape = {
-            Auth?: AmplifyAuthShape;
-            default?: { Auth?: AmplifyAuthShape };
-          };
-
+          type AmplifyAuthShape = { signOut: (options?: { global?: boolean }) => Promise<void>; };
+          type AmplifyModuleShape = { Auth?: AmplifyAuthShape; default?: { Auth?: AmplifyAuthShape }; };
           const AmplifyModule: AmplifyModuleShape = (await import('aws-amplify')) as AmplifyModuleShape;
           const Auth = AmplifyModule.Auth ?? AmplifyModule.default?.Auth;
           if (Auth && typeof Auth.signOut === 'function') {
-            // Ask Cognito to sign out globally when possible
             await Auth.signOut({ global: true });
           }
         } catch (e) {
           console.warn('Fallback amplify signOut failed', e);
         }
-
-        // Clear amplify-related localStorage keys and reload
         clearAmplifyLocalStorage();
       }
-
       window.location.reload();
     } catch (err) {
       console.error("Sign out failed", err);
       alert("Sign out failed. Please try again.");
     }
   };
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  const messages = useMemo(() => {
-    return messagesByConversation[activeConversationId] ?? [];
-  }, [messagesByConversation, activeConversationId]);
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
-
-  const handleSelectConversation = (conversationId: string) => {
-    setActiveConversationId(conversationId);
-    setMobileSidebarOpen(false);
-  };
-
-  const handleCreateConversation = () => {
-    const newId = createId();
-    const createdAt = now();
-    const starterMessage: ChatMessage = {
-      id: createId(),
-      role: "agent",
-      content: "What would you like to work on today?",
-      createdAt,
-    };
-
-    setConversations((prev) => ({
-      ...prev,
-      [newId]: {
-        id: newId,
-        title: "New chat",
-        updatedAt: createdAt,
-      },
-    }));
-
-    setConversationOrder((prev) => [newId, ...prev.filter((id) => id !== newId)]);
-
-    setMessagesByConversation((prev) => ({
-      ...prev,
-      [newId]: [starterMessage],
-    }));
-
-    setActiveConversationId(newId);
-  };
-
-  const handleDeleteConversation = (conversationId: string) => {
-    // simple confirmation for now
-    const ok = confirm("Delete this conversation? This cannot be undone.");
-    if (!ok) return;
-
-    setConversations((prev) => {
-      const rest = { ...prev };
-      delete rest[conversationId];
-      return rest;
-    });
-
-    setMessagesByConversation((prev) => {
-      const rest = { ...prev };
-      delete rest[conversationId];
-      return rest;
-    });
-
-    const remainingOrder = conversationOrder.filter((id) => id !== conversationId);
-    setConversationOrder(() => remainingOrder);
-
-    setActiveConversationId((current) => {
-      if (current !== conversationId) return current;
-      // choose first available conversationOrder after deletion, or fallback to initial
-      if (remainingOrder.length > 0) return remainingOrder[0];
-      return initialConversationId;
-    });
-    // close the mobile sidebar after deleting a conversation so the UI is consistent
-    setMobileSidebarOpen(false);
-  };
-
-  const updateConversationMeta = (conversationId: string, fallbackTitle: string) => {
-    setConversations((prev) => {
-      const existing = prev[conversationId];
-      if (!existing) return prev;
-      const hasTitle = existing.title && existing.title !== "New chat";
-      const updatedTitle = hasTitle ? existing.title : fallbackTitle;
-      return {
-        ...prev,
-        [conversationId]: {
-          ...existing,
-          title: updatedTitle,
-          updatedAt: now(),
-        },
-      };
-    });
-
-    setConversationOrder((prev) => [conversationId, ...prev.filter((id) => id !== conversationId)]);
-  };
-
-  const handleSendMessage = async () => {
-    const trimmed = pendingInput.trim();
-    if (!trimmed || isSending) return;
-
-    const conversationId = activeConversationId;
-    const createdAt = now();
-    const userMessage: ChatMessage = {
-      id: createId(),
-      role: "user",
-      content: trimmed,
-      createdAt,
-    };
-
-    setPendingInput("");
-    setIsSending(true);
-    setMessagesByConversation((prev) => ({
-      ...prev,
-      [conversationId]: [...(prev[conversationId] ?? []), userMessage],
-    }));
-    updateConversationMeta(conversationId, trimmed.slice(0, 60));
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: trimmed,
-          conversationId,
-        }),
-      });
-
-      const data: { message?: string } = response.ok ? await response.json() : {};
-      const assistantContent = data.message ??
-        "I was unable to reach the assistant service. Please try again in a moment.";
-
-      const agentMessage: ChatMessage = {
-        id: createId(),
-        role: "agent",
-        content: assistantContent,
-        createdAt: now(),
-      };
-
-      setMessagesByConversation((prev) => ({
-        ...prev,
-        [conversationId]: [...(prev[conversationId] ?? []), agentMessage],
-      }));
-      updateConversationMeta(conversationId, trimmed.slice(0, 60));
-  } catch {
-      const fallbackMessage: ChatMessage = {
-        id: createId(),
-        role: "agent",
-        content: "Something went wrong while sending your message. Check your connection and try again.",
-        createdAt: now(),
-      };
-
-      setMessagesByConversation((prev) => ({
-        ...prev,
-        [conversationId]: [...(prev[conversationId] ?? []), fallbackMessage],
-      }));
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const getRelativeTime = (isoString: string) =>
-    isHydrated ? formatRelativeTime(isoString) : relativeTimeFallback;
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] md:grid md:grid-cols-[260px_1fr]">
@@ -355,8 +418,7 @@ export function ChatShell() {
             {conversationOrder.map((conversationId) => {
               const conversation = conversations[conversationId];
               if (!conversation) return null;
-              const convMessages = messagesByConversation[conversationId] ?? [];
-              const lastMessage = convMessages[convMessages.length - 1];
+              const lastMessage = [...(localMessages[conversationId] ?? [])].pop();
               const isActive = conversationId === activeConversationId;
               return (
                 <li key={conversationId}>
@@ -448,43 +510,101 @@ export function ChatShell() {
         </header>
 
         <main className="flex-1 overflow-hidden">
-          <section
-            ref={scrollRef}
-            className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-6 sm:px-6"
-            role="log"
-            aria-live="polite"
-            aria-label="Conversation messages"
-          >
-            {messages.length === 0 ? (
-              <div className="mx-auto flex max-w-xl flex-col items-center gap-2 text-center text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]">
-                <Sparkles className="h-5 w-5" aria-hidden="true" />
-                <p>Start the conversation by sending a message.</p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <article
-                  key={message.id}
-                  className={cn(
-                    "flex w-full flex-col gap-2",
-                    message.role === "user" ? "items-end" : "items-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[min(100%,_700px)] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
-                      message.role === "user"
-                        ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                        : "bg-[color-mix(in_srgb,var(--card)_85%,var(--primary)_15%)] text-[var(--foreground)]"
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+          <section ref={scrollRef} className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-6 sm:px-6">
+            <div className="mx-auto w-full max-w-3xl space-y-4">
+              {activeMessages.map((msg, idx) => {
+                const key = msg.id || `msg-${idx}`;
+                if (!msg.id && typeof window !== 'undefined') {
+                  interface WarnWindow extends Window { __missingMsgIdWarned?: boolean }
+                  const w = window as WarnWindow;
+                  if (!w.__missingMsgIdWarned) {
+                    console.warn('[ChatShell] Message without id encountered; using index fallback key.');
+                    w.__missingMsgIdWarned = true;
+                  }
+                }
+                return (
+                  <div key={key} className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                    <div className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-2",
+                      msg.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
+                    )}>
+                      {msg.role === 'agent' ? (
+                        <ReactMarkdown
+                          className="prose prose-sm max-w-none prose-p:my-2 prose-pre:my-3 prose-code:before:content-[''] prose-code:after:content-['']"
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            code({className, children, ...props}) {
+                              const langMatch = /language-(\w+)/.exec(className || '');
+                              const isBlock = className && className.includes('language-');
+                              const rawText = Array.isArray(children) ? children.join('') : String(children);
+                              if (!isBlock) {
+                                return (
+                                  <code
+                                    className={cn(
+                                      "rounded bg-black/10 px-1 py-0.5 text-[0.75rem]",
+                                      langMatch ? `language-${langMatch[1]}` : ''
+                                    )}
+                                    {...props}
+                                  >
+                                    {children}
+                                  </code>
+                                );
+                              }
+                              return (
+                                <div className="group relative my-3">
+                                  <pre className={cn(
+                                    "overflow-x-auto rounded-lg bg-[#0f1115] p-3 text-xs text-gray-100",
+                                    langMatch ? `language-${langMatch[1]}` : ''
+                                  )}>
+                                    <code {...props}>{children}</code>
+                                  </pre>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      try {
+                                        navigator.clipboard.writeText(rawText);
+                                      } catch (e) {
+                                        console.warn('Clipboard copy failed', e);
+                                      }
+                                    }}
+                                    aria-label="Copy code to clipboard"
+                                    className="absolute right-2 top-2 rounded-md bg-black/40 px-2 py-1 text-[0.65rem] font-medium text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/60"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              );
+                            },
+                            a({href, children}) {
+                              return <a href={href} target="_blank" rel="noopener noreferrer" className="underline text-blue-600 hover:text-blue-500">{children}</a>;
+                            },
+                            table({children}) {
+                              return <div className="overflow-x-auto my-2"><table className="text-xs border-collapse">{children}</table></div>;
+                            },
+                            th({children}) { return <th className="border px-2 py-1 bg-gray-200">{children}</th>; },
+                            td({children}) { return <td className="border px-2 py-1">{children}</td>; },
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+                      )}
+                      <div className="mt-1 text-xs opacity-70">
+                        {new Date(msg.createdAt).toLocaleTimeString()}
+                      </div>
+                    </div>
                   </div>
-                  <time className="text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
-                    {getRelativeTime(message.createdAt)}
-                  </time>
-                </article>
-              ))
-            )}
+                );
+              })}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl bg-gray-100 px-4 py-2 text-gray-900">
+                    <p className="text-sm">Thinking...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         </main>
 
@@ -509,7 +629,7 @@ export function ChatShell() {
               className="w-full resize-none rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_90%,transparent)] px-4 py-3 text-sm shadow-sm transition focus-visible:border-[var(--ring)] focus-visible:outline-none"
               aria-describedby="chat-helper-text"
             />
-            <div className="flex items-center justify-between text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
+                          <div className="flex items-center justify-between text-xs text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
               <div className="flex items-center gap-3">
                 <a
                   href={PRIVACY_URL}
@@ -522,18 +642,20 @@ export function ChatShell() {
                 </a>
                 <p id="chat-helper-text">Press Enter to send, Shift + Enter for a new line.</p>
               </div>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--primary-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isSending || !pendingInput.trim()}
-              >
-                {isSending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <Send className="h-4 w-4" aria-hidden="true" />
-                )}
-                Send
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--primary-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading || !pendingInput.trim()}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Send className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  Send
+                </button>
+              </div>
             </div>
           </form>
         </footer>
@@ -562,10 +684,7 @@ export function ChatShell() {
                 type="button"
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)] transition hover:opacity-90"
                 aria-label="Start a new chat"
-                onClick={() => {
-                  handleCreateConversation();
-                  setMobileSidebarOpen(false);
-                }}
+                onClick={handleCreateConversation}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -575,8 +694,7 @@ export function ChatShell() {
                 {conversationOrder.map((conversationId) => {
                   const conversation = conversations[conversationId];
                   if (!conversation) return null;
-                  const convMessages = messagesByConversation[conversationId] ?? [];
-                  const lastMessage = convMessages[convMessages.length - 1];
+                  const lastMessage = [...(localMessages[conversationId] ?? [])].pop();
                   const isActive = conversationId === activeConversationId;
                   return (
                     <li key={conversationId}>
