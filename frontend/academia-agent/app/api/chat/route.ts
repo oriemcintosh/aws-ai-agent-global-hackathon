@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   try {
     // Spawn the Python streaming invoker. The Python script reads a JSON payload from stdin
     // Use absolute path from project root
-    const scriptPath = path.join(process.cwd(), '..', '..', 'agentcore_agents', 'invoke_agent_stream.py');
+    const scriptPath = path.join(process.cwd(), '..', '..', 'agentcore_agents', 'invoke_agent.py');
     const py = spawn('python3', [scriptPath], {
       stdio: ['pipe', 'pipe', 'inherit']
     });
