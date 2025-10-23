@@ -6,7 +6,6 @@ import {
   ThemeProvider,
   Theme,
   useTheme,
-  View,
   useAuthenticator,
 } from '@aws-amplify/ui-react';
 import type { ReactNode } from 'react';
