@@ -11,7 +11,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 // Lazy client initialization to ensure Amplify is configured first
-let clientInstance: ReturnType<typeof generateClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let clientInstance: any = null;
 const getClient = () => {
   if (!clientInstance) {
     clientInstance = generateClient();
