@@ -20,38 +20,38 @@ const getClient = () => {
   return clientInstance;
 };
 
-// GraphQL mutation to send messages
+// GraphQL mutation aligned with updated schema (sendMessage(prompt: String!))
 const sendMessageMutation = /* GraphQL */ `
-  mutation SendMessage($conversationId: ID!, $content: String!) {
-    sendMessage(conversationId: $conversationId, content: $content) {
+  mutation SendMessage($prompt: String!) {
+    sendMessage(prompt: $prompt) {
       id
       conversationId
       role
       content
-      timestamp
+      createdAt
     }
   }
 `;
 
-// GraphQL subscription for real-time message updates
+// GraphQL subscription without arguments (onMessageReceived)
 const onMessageReceivedSubscription = /* GraphQL */ `
-  subscription OnMessageReceived($conversationId: ID!) {
-    onMessageReceived(conversationId: $conversationId) {
+  subscription OnMessageReceived {
+    onMessageReceived {
       id
       conversationId
       role
       content
-      timestamp
+      createdAt
     }
   }
 `;
 
 interface MessageFromAppSync {
   id: string;
-  conversationId: string;
+  conversationId?: string;
   role: string;
   content: string;
-  timestamp: string;
+  createdAt: string;
 }
 
 // Simplified Conversation Summary for the sidebar
@@ -152,7 +152,6 @@ export function ChatShell() {
 
     const sub = getClient().graphql({
       query: onMessageReceivedSubscription,
-      variables: { conversationId: activeConversationId },
     });
 
     // Type assertion for subscription
@@ -170,7 +169,7 @@ export function ChatShell() {
               id: message.id,
               role: 'agent',
               content: message.content,
-              createdAt: message.timestamp,
+              createdAt: message.createdAt,
             };
 
             setLocalMessages(prev => {
@@ -274,7 +273,7 @@ export function ChatShell() {
     try {
       const result = await getClient().graphql({
         query: sendMessageMutation,
-        variables: { conversationId: activeConversationId, content: trimmed },
+        variables: { prompt: trimmed },
       });
 
       console.log('AppSync mutation result:', result);
@@ -286,7 +285,7 @@ export function ChatShell() {
 
       // Attempt to extract the assistant message directly from mutation result (not waiting for subscription)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawMessage: any = (result as any).data?.sendMessage;
+  const rawMessage: any = (result as any).data?.sendMessage;
       if (rawMessage && rawMessage.content) {
         let parsedContent = rawMessage.content;
         // If content is a JSON string with nested structure { result: { content: [{text: ...}] } }
@@ -308,7 +307,7 @@ export function ChatShell() {
           id: rawMessage.id,
           role: 'agent',
           content: parsedContent,
-          createdAt: rawMessage.timestamp || now(),
+          createdAt: rawMessage.createdAt || now(),
         };
         setLocalMessages(prev => {
           const conv = prev[activeConversationId] ?? [];

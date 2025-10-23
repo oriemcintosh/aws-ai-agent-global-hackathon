@@ -20,14 +20,19 @@ def get_agent_arn():
     return _cached_agent_arn
 
 def handler(event, context):
-    # AppSync Lambda resolver event structure
-    args = event.get('arguments', {})
-    conversation_id = args.get('conversationId') or f"conv-{uuid.uuid4().hex[:8]}"
-    content = args.get('content') or ''
-    identity = event.get('identity') or {}
-    user_id = identity.get('sub', 'anonymous')
+    """Lambda resolver for sendMessage(prompt: String!): Message!
 
-    if not content.strip():
+    The updated GraphQL schema passes a single 'prompt' argument. We still
+    synthesize a conversationId (ephemeral) so the client can group messages
+    locally. In the future we can restore persistent conversations by adding
+    an argument back to the schema.
+    """
+    args = event.get('arguments', {})
+    prompt = args.get('prompt') or ''
+    # Generate an ephemeral conversation id per invocation (keeps shape intact)
+    conversation_id = f"conv-{uuid.uuid4().hex[:8]}"
+
+    if not prompt.strip():
         return _message(conversation_id, 'assistant', 'Error: empty prompt')
 
     try:
@@ -35,14 +40,13 @@ def handler(event, context):
     except Exception as e:
         return _message(conversation_id, 'assistant', f'SSM error: {e}')
 
-    # Invoke AgentCore runtime (non-streaming for now). The Python helper returns an iterable of bytes chunks.
     try:
-        payload_bytes = json.dumps({"prompt": content}).encode('utf-8')
+        payload_bytes = json.dumps({"prompt": prompt}).encode('utf-8')
         response = agentcore.invoke_agent_runtime(agentRuntimeArn=agent_arn, payload=payload_bytes)
     except Exception as e:
         return _message(conversation_id, 'assistant', f'Agent invocation failed: {e}')
 
-    assembled = []
+    assembled: list[str] = []
     for chunk in response.get('response', []):
         try:
             text = chunk.decode('utf-8') if isinstance(chunk, (bytes, bytearray)) else str(chunk)
@@ -55,10 +59,11 @@ def handler(event, context):
 
 
 def _message(conversation_id: str, role: str, content: str):
+    # createdAt matches GraphQL schema's Message.createdAt (AWSDateTime)
     return {
         'id': f"{conversation_id}-{int(time.time()*1000)}",
         'conversationId': conversation_id,
         'role': role,
         'content': content,
-        'timestamp': datetime.utcnow().isoformat() + 'Z'
+        'createdAt': datetime.utcnow().isoformat(timespec='seconds') + 'Z',
     }
