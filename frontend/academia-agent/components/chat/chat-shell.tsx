@@ -305,9 +305,9 @@ export function ChatShell() {
 
         const assistantMsg: ChatMessage = {
           id: rawMessage.id,
-            role: 'agent',
-            content: parsedContent,
-            createdAt: rawMessage.timestamp || now(),
+          role: 'agent',
+          content: parsedContent,
+          createdAt: rawMessage.timestamp || now(),
         };
         setLocalMessages(prev => {
           const conv = prev[activeConversationId] ?? [];
