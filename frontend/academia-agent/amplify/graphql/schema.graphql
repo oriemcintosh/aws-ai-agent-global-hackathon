@@ -1,0 +1,32 @@
+"""
+Represents a chat message exchanged with the Academia Agent.
+"""
+type Message {
+  id: ID!
+  role: String!
+  content: String!
+  createdAt: AWSDateTime!
+  conversationId: ID
+}
+
+"""
+Root mutations for sending prompts to the agent.
+"""
+type Mutation {
+  sendMessage(prompt: String!): Message!
+}
+
+"""
+Subscription to receive messages (extensible for streaming).
+Currently fires after sendMessage returns.
+"""
+type Subscription {
+  onMessageReceived: Message @aws_subscribe(mutations: ["sendMessage"])
+}
+
+"""
+Placeholder Query root (required by AppSync, extend later for history fetch).
+"""
+type Query {
+  _empty: String
+}
