@@ -78,7 +78,8 @@ const lambdaDataSource = api.addLambdaDataSource(
   agentInvoker
 );
 
-// Resolver for sendMessage mutation
+// Resolver for sendMessage mutation (schema currently expects 'prompt' arg only)
+// TODO: If persistent conversation threads are needed, extend schema with conversationId argument
 lambdaDataSource.createResolver('SendMessageResolver', {
   typeName: 'Mutation',
   fieldName: 'sendMessage',
