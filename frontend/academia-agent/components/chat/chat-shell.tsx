@@ -418,7 +418,7 @@ export function ChatShell() {
             {conversationOrder.map((conversationId) => {
               const conversation = conversations[conversationId];
               if (!conversation) return null;
-              const lastMessage = [...(activeMessages ?? [])].pop();
+              const lastMessage = [...(localMessages[conversationId] ?? [])].pop();
               const isActive = conversationId === activeConversationId;
               return (
                 <li key={conversationId}>
